@@ -1,0 +1,10 @@
+ddddocr==1.4.11
+ffmpeg_python==0.2.0
+loguru==0.7.2
+opencv_python==4.8.1.78
+opencv_python_headless==4.9.0.80
+PyExecJS==1.5.1
+pyzbar==0.1.9
+Requests==2.32.3
+selenium==4.22.0
+skimage==0.0
