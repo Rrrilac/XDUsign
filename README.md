@@ -1,3 +1,5 @@
+![](https://img.shields.io/badge/Python-3.10.1-blue)
+![](https://img.shields.io/badge/version-1.0.1-green)
 ## 某高校全自动课程签到脚本
 基于采集课程直播流实现的二维码签到  
 
@@ -15,7 +17,7 @@ python万岁😌
 
 支持签到消息推送微信（server酱）  
   
-2024.7.16 v1.0  
+2024.7.16 v1.0.1
 添加注释并更换selenium方式采集为m3u8流直接采集  
 添加功能测试入口  
 制作懒人包，省去配环境的麻烦  
