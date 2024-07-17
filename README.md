@@ -1,6 +1,6 @@
 ![](https://img.shields.io/badge/Python-3.10.1-blue)
 ![](https://img.shields.io/badge/version-1.0.1-green)
-## 某高校全自动课程签到脚本
+## 某高校全自动课程签到模块
 基于采集课程直播流实现的二维码签到  
 
 支持XDU特有的二维码+定位课程签到  
