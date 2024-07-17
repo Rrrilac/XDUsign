@@ -24,5 +24,11 @@ python万岁😌
 ## 使用说明
 核心文件为core.py  
 功能测试文件为TEST.py  
-DATA.txt存放了支持采集直播流的教室  
+DATA.txt存放了支持采集直播流的教室
+
+已经自带requirements.txt了,建议python版本3.10  
+需要ffmpeg和node.js环境  
+对python编程不太熟悉的或者懒得配环境的  
+可以下载整合包  
+链接：https://pan.quark.cn/s/76070db99bc6
 
