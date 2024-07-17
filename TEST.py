@@ -7,10 +7,13 @@ import string
 import sys
 import time
 import threading
+from cv2 import imread
+from pyzbar import pyzbar
+from datetime import datetime, timedelta
 from loguru import logger as log
 from random import choices, randint
 from core import account, web, users, URL_WEEK_TABLES, URL_COURSES
-from core import validate_pass, capture, get_code, update_account, validate_again
+from core import validate_pass, download_ts, get_code, update_account, validate_again
 
 account, send_key, password, uid, fid, name, exit_code = [None] * 7
 web = requests.session()
@@ -21,9 +24,65 @@ web = requests.session()
 def get_stream():
     code = get_code('A-105')
     stream_url = f'http://202.117.115.53:8092/pag/202.117.115.50/7302/00{code}/0/MAIN/TCP/live.m3u8'
-    thread = threading.Thread(target=capture, args=(stream_url, 0.3))
-    thread.start()
-    time.sleep(5)
+    capture_first(stream_url)
+
+
+def capture_first(url_ts):
+    global exit_code
+    last_ts_name = None
+    quit_number = 10
+    while quit_number:
+        try:
+            t_s = datetime.now()
+            # t_s, t_e 用于测试每个包接收加处理的时间
+            # 使用requests库获取M3U8文件内容
+            response = requests.get(url_ts)
+            m3u8_content = response.text
+            # 找到TS流的URL（通常在M3U8文件中以.ts结尾）
+            ts_name = m3u8_content.splitlines()[-1]
+            # 对于网络通畅情况，选择等待下一个包
+            if ts_name != last_ts_name:
+                ts_url = url_ts.rsplit('/', 1)[0] + '/' + ts_name
+                # 我真的是气死，timeout属性必须放最前面，但ffmpeg-python的开发作者没想到这个
+                # 只能本地保存.ts了
+                log.info(f"[测试]预下载分片：{ts_name}")
+                # 对于网络不通畅情况，选择放弃该包
+                if not download_ts_test(ts_url):
+                    continue
+                quit_number = quit_number - 1
+                ffmpeg \
+                    .input(f"captures/{account}.ts") \
+                    .filter('select', 'gte(n,{})'.format(21)) \
+                    .output(f'captures/{account}.jpg', vframes=1, format='image2', vcodec='mjpeg') \
+                    .run(overwrite_output=True)
+                # capture_stderr=True 如果加上这个属性，那么只显示错误信息
+                # 不加就会完全显示，使用quiet=True则会完全静默
+
+                t_e = datetime.now()
+                t_delta = t_e - t_s
+                log.info(f"[测试]分片获取成功:耗时 {(t_delta.total_seconds() * 1000):.3f}ms")
+                last_ts_name = ts_name
+            time.sleep(0.3)
+        except Exception as e:
+            log.error(f'{account}:下载直播流时出现问题： {str(e)}')
+            time.sleep(1)
+
+
+def download_ts_test(url: str):
+    with requests.get(url, stream=True, timeout=0.5) as ts:
+        test_begin = datetime.now()
+        if ts.status_code == 200:
+            with open(f"captures/{account}.ts", 'wb') as f:
+                for chunk in ts.iter_content(chunk_size=128000):
+                    test_end = datetime.now()
+                    delta = test_end - test_begin
+                    if delta.total_seconds() > 0.42:
+                        log.warning("分包下载时间预估超过>0.7s，丢弃")
+                        return False
+                    f.write(chunk)
+                    test_begin = datetime.now()
+        return True
+        # 使用ffmpeg-python来截取一帧图像
 
 
 # 测试用，使用录制的视频，每10帧截图一次
@@ -160,6 +219,23 @@ def test(account_str):
         print(validate)
     print("功能正常")
     time.sleep(0.5)
+
+    print("")
+    print("测试二维码解码功能")
+    time.sleep(1)
+    image = imread(f'captures/TEST.png')
+    barcodes = pyzbar.decode(image)
+    if len(barcodes):
+        for barcode in barcodes:
+            barcode_data = barcode.data.decode('utf-8')
+    print(f"识别结果：{barcode_data}")
+
+    print("测试直播流抓取")
+    get_stream()
+    # 建立连接开销较大，第一个分包下载三四秒很正常
+    # 红色文字是ffmpeg的提示，虽然是红字但是除非系统终止否则一般没大碍
+    # 主要关注网络性能，如果分片无法下载或平均超过750ms则异常
+
     print("==========测试完毕==========")
     time.sleep(0.4)
     print("除正式签到外的功能已全部测试成功")
@@ -170,5 +246,6 @@ if __name__ == '__main__':
     # 填写一个配置好的学号
     # 测试目的是测试代码能否跑通，测试一个号即可
     test('23009888888')
+
 
 

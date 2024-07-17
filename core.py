@@ -506,8 +506,6 @@ def capture(url: str, interval: int):
     exit_code = False
     while not exit_code:
         try:
-            # t_s = datetime.now()
-            # t_s, t_e 用于测试每个包接收加处理的时间
             # 使用requests库获取M3U8文件内容
             response = requests.get(url)
             m3u8_content = response.text
@@ -518,7 +516,6 @@ def capture(url: str, interval: int):
                 ts_url = url.rsplit('/', 1)[0] + '/' + ts_name
                 # 我真的是气死，timeout属性必须放最前面，但ffmpeg-python的开发作者没想到这个
                 # 只能本地保存.ts了
-                log.info(ts_name)
                 # 对于网络不通畅情况，选择放弃该包
                 if not download_ts(ts_url):
                     continue
@@ -527,13 +524,6 @@ def capture(url: str, interval: int):
                     .filter('select', 'gte(n,{})'.format(21)) \
                     .output(f'captures/{account}.jpg', vframes=1, format='image2', vcodec='mjpeg') \
                     .run(overwrite_output=True, capture_stderr=True)
-                # capture_stderr=True 如果加上这个属性，那么只显示错误信息
-                # 不加就会完全显示，使用quiet=True则会完全静默
-
-                # t_e = datetime.now()
-                # t_delta = t_e - t_s
-                # log.info(f"Total Time: {round(t_delta.total_seconds() * 1000)}ms")
-
                 last_ts_name = ts_name
             time.sleep(interval)
         except Exception as e:
@@ -554,7 +544,6 @@ def download_ts(url: str):
                         return False
                     f.write(chunk)
                     test_begin = datetime.now()
-        log.info('downloaded')
         return True
         # 使用ffmpeg-python来截取一帧图像
 
