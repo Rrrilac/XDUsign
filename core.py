@@ -467,7 +467,7 @@ def time_table():
     time_params = [
         {"start_time": "08:20", "end_time": "10:10", "s1": 1},
         {"start_time": "10:14", "end_time": "12:05", "s1": 3},
-        {"start_time": "13:50", "end_time": "18:40", "s1": 5},
+        {"start_time": "13:50", "end_time": "15:40", "s1": 5},
         {"start_time": "15:44", "end_time": "17:35", "s1": 7},
         {"start_time": "18:50", "end_time": "20:35", "s1": 9}
     ]
