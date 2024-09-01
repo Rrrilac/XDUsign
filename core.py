@@ -111,7 +111,7 @@ def get_weekcourse():
         html_week = web.get(URL_WEEK_TABLES)
         # 获取年份，学期，周，用于获取课表信息
         week = re.findall('getWeekDetail\(\'(\d{1,2})\'', html_week.text, re.S)[0]
-        infer = re.findall('<option  selected  value="13">(.*?)-.*?第(.*?)学期</option>', html_week.text, re.S)[0]
+        infer = re.findall('<option  selected  value=".*?">(.*?)-.*?第(.*?)学期</option>', html_week.text, re.S)[0]
         termYear = infer[0]
         if '一' == infer[1]:
             termId = 1
