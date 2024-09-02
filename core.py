@@ -285,7 +285,7 @@ def normal_sign():
                     # 然而这些是针对设备码以及模拟定位软件的，对直接网络访问无影响
                     location_url = f'https://mobilelearn.chaoxing.com/pptSign/stuSignajax?address={ADDRESS_DEFAULT}&' \
                                    f'activeId={active_id}&latitude={latitude}&longitude={longitude}&fid=0&appType=15&'\
-                                   f'ifTiJiao=1&validate={validate}&deviceCode={device_code}&vpProbability=0&vpStrategy='
+                                   f'ifTiJiao=1&validate={validate}&deviceCode={device_code}&vpProbability=-1&vpStrategy='
                     # 暂时不考虑发送到微信，个人认为无关紧要
                     log.info(f'{account}：检测到来自{course_name}的位置签到，签到结果为' + web.get(location_url).text)
 
@@ -312,7 +312,7 @@ def qrcode_sign(courseid: str, clazzid: str, code: str):
     final_time = datetime.now() + timedelta(minutes=115)
     last_barcode_data = 'default'
     stream_url = f'http://202.117.115.53:8092/pag/202.117.115.50/7302/00{code}/0/MAIN/TCP/live.m3u8'
-    thread = threading.Thread(target=capture, args=(stream_url, 1.8))
+    thread = threading.Thread(target=capture, args=(stream_url, 1))
     thread.start()
     # 循环截图和二维码识别
     while True:
@@ -365,9 +365,8 @@ def qrcode_sign(courseid: str, clazzid: str, code: str):
                               f"oZ4tVAn2TkbLrU5KaqE5c2nrYcLjiTPsIvES0bMOtfX445GAQKnMrMo+3W2FKfGichnoLiFd2iU= "
                 sign_ordinary = web.get(
                     f'https://mobilelearn.chaoxing.com/pptSign/stuSignajax?enc={enc}&name={name}'
-                    f'&activeId={aid}&uid={uid}&clientip=&location=&latitude=-1&longitude=-1&fid={fid}'
-                    f'{{"result":1,"latitude":{latitude},"longitude":{longitude},"address":"{ADDRESS_DEFAULT}"}}'
-                    f'&appType=15&deviceCode={device_code}&vpProbability=0&vpStrategy=').text
+                    f'&activeId={aid}&uid={uid}&clientip=&location={{"result":1,"latitude":{latitude},"longitude":{longitude},"mockData": {{"strategy": 0,"probability": -1}},"address":"{ADDRESS_DEFAULT}"}}&latitude=-1&longitude=-1&fid={fid}'
+                    f'&appType=15&deviceCode={device_code}&vpProbability=-1&vpStrategy=').text
                 # 直播推流延迟过高可能导致二维码失效
                 if sign_ordinary == "签到失败，请重新扫描。" or sign_ordinary == "非本班学生":
                     pass
@@ -384,9 +383,8 @@ def qrcode_sign(courseid: str, clazzid: str, code: str):
                     validate = validate_again(validate, web)
                     sign_validate = web.get(
                         f'https://mobilelearn.chaoxing.com/pptSign/stuSignajax?enc={enc}&name={name}&activeId={aid}'
-                        f'&uid={uid}&clientip=&location={{"result":1,"latitude":{latitude},"longitude":{longitude}'
-                        f',"address":"{ADDRESS_DEFAULT}"}}&latitude=-1&longitude=-1&fid={fid}&appType=15'
-                        f'&enc2={enc2}&validate={validate}&deviceCode={device_code}&vpProbability=0&vpStrategy=').text
+                        f'&uid={uid}&clientip=&location={{"result":1,"latitude":{latitude},"longitude":{longitude},"mockData": {{"strategy": 0,"probability": -1}},"address":"{ADDRESS_DEFAULT}"}}&latitude=-1&longitude=-1&fid={fid}&appType=15'
+                        f'&enc2={enc2}&validate={validate}&deviceCode={device_code}&vpProbability=-1&vpStrategy=').text
                     if sign_validate == 'success' or sign_validate == '您已签到过了':
                         log.info(f'{account}签完啦')
                         exit_code = True
@@ -518,6 +516,7 @@ def capture(url: str, interval: int):
                 ts_url = url.rsplit('/', 1)[0] + '/' + ts_name
                 # 我真的是气死，timeout属性必须放最前面，但ffmpeg-python的开发作者没想到这个
                 # 只能本地保存.ts了
+
                 # 对于网络不通畅情况，选择放弃该包
                 if not download_ts(ts_url):
                     continue
@@ -546,6 +545,7 @@ def download_ts(url: str):
                         return False
                     f.write(chunk)
                     test_begin = datetime.now()
+        log.info('downloaded')
         return True
         # 使用ffmpeg-python来截取一帧图像
 
