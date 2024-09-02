@@ -545,7 +545,6 @@ def download_ts(url: str):
                         return False
                     f.write(chunk)
                     test_begin = datetime.now()
-        log.info('downloaded')
         return True
         # 使用ffmpeg-python来截取一帧图像
 
