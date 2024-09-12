@@ -225,7 +225,9 @@ def normal_sign():
             courses = re.findall(pattern, html.text)
             break
         except Exception as e:
-            log.error(f'{account}:Error: {str(e)}')
+            course_fail_msg = f'{account}:Error: {str(e)}'
+            log.error(course_fail_msg)
+            requests.get(f"https://sctapi.ftqq.com/{send_key}.send?title={course_fail_msg}")
             web.headers.update(headers_refresh)
             time.sleep(15)
     if not courses:
@@ -292,19 +294,31 @@ def normal_sign():
 
 def course_sign(s1: int):
     day = datetime.now().weekday() + 1
-    course_data = get_weekcourse()
+    course_data = None
+    while course_data is None:
+        try:
+            course_data = get_weekcourse()
+        except Exception as e:
+            log.error(f'{account}：课表获取失败 {str(e)}')
+            time.sleep(30)
     s2 = s1 + 1
     for item in course_data:
         if item["weekDay"] == day and item["section"] == f'{s1}-{s2}':
-            code = get_code(item['place'])
-            result = qrcode_sign(item["courseId"], item["teachClazzId"], code)
+            try:
+                code = get_code(item['place'])
+                result = qrcode_sign(item["courseId"], item["teachClazzId"], code)
+            except Exception as e:
+                log.error(f'{account}:课程签到出错： {str(e)}')
+                global exit_code
+                exit_code = True
+                result = 0
             result_str = {
-                0: '星期' + str(day) + '的' + str(s1) + '-' + str(s2) + '节直播页面启动失败，发生什么事了……',
+                0: '星期' + str(day) + '的' + str(s1) + '-' + str(s2) + '节签到线程启动失败，发生什么事了……',
                 1: '星期' + str(day) + '的' + str(s1) + '-' + str(s2) + '节全程未检测到二维码，发生什么事了……',
                 9: '星期' + str(day) + '的' + str(s1) + '-' + str(s2) + '节已为您代签'
             }
             requests.get(f'https://sctapi.ftqq.com/{send_key}.send?title={result_str[result]}')
-            time.sleep(900)
+            return
 
 
 def qrcode_sign(courseid: str, clazzid: str, code: str):
@@ -312,8 +326,10 @@ def qrcode_sign(courseid: str, clazzid: str, code: str):
     final_time = datetime.now() + timedelta(minutes=115)
     last_barcode_data = 'default'
     stream_url = f'http://202.117.115.53:8092/pag/202.117.115.50/7302/00{code}/0/MAIN/TCP/live.m3u8'
-    thread = threading.Thread(target=capture, args=(stream_url, 1))
+    thread = threading.Thread(target=capture, args=(stream_url, 1.8))
     thread.start()
+    while not os.path.exists(f'captures/{account}.jpg'):
+        time.sleep(2)
     # 循环截图和二维码识别
     while True:
         current_time = datetime.now()
@@ -322,8 +338,12 @@ def qrcode_sign(courseid: str, clazzid: str, code: str):
             exit_code = True
             os.remove(f'captures/{account}.jpg')
             return 1
-        image = imread(f'captures/{account}.jpg')
-        barcodes = pyzbar.decode(image)
+        try:
+            image = imread(f'captures/{account}.jpg')
+            barcodes = pyzbar.decode(image)
+        except Exception as e:
+            log.error(f'{account}:解析图片异常: {str(e)}')
+            continue
         # 扫描出二维码，开始签到
         if len(barcodes):
             for barcode in barcodes:
@@ -456,7 +476,7 @@ def validate_again(validate_msg: str, web_vv):
         if not v_limit:
             fatal_error = f'{account}:滑块验证机制出现故障，签到程序被迫终止'
             log.error(fatal_error)
-            f"https://sctapi.ftqq.com/{send_key}.send?title=程序意外终止，请查看日志"
+            requests.get(f"https://sctapi.ftqq.com/{send_key}.send?title=程序意外终止，请查看日志")
             sys.exit()
     return validate_msg
 
@@ -528,7 +548,7 @@ def capture(url: str, interval: int):
                 last_ts_name = ts_name
             time.sleep(interval)
         except Exception as e:
-            log.error(f'{account}:下载直播流时出现问题： {str(e)}')
+            log.error(f'{account}:本帧下载异常： {str(e)}')
             time.sleep(1)
 
 
@@ -545,6 +565,7 @@ def download_ts(url: str):
                         return False
                     f.write(chunk)
                     test_begin = datetime.now()
+        log.info('downloaded')
         return True
         # 使用ffmpeg-python来截取一帧图像
 
