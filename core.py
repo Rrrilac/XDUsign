@@ -238,7 +238,11 @@ def normal_sign():
         clazz_id = unit[1]
         course_name = unit[2]
         url = f'https://mobilelearn.chaoxing.com/widget/pcpick/stu/index?courseId={course_id}&jclassId={clazz_id}'
-        html_str = web.get(url).text
+        try:
+            html_str = web.get(url).text
+        except Exception as e:
+            course_fail_msg = f'{account}:Error: {str(e)}'
+            break;
         ak = re.findall(r'进行中\((\d{1,2})\)', html_str, re.S)
         if ak:
             end_index = html_str.find('已结束')
