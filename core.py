@@ -21,7 +21,6 @@ web = requests.session()
 # 如果部署云服务器，建议windows server（已测试）  
 # 或centos+宝塔面板，经测试3M带宽情况下稳定极限是三进程  
 # 设定捕捉直播流时片段超时时间，供低带宽云服务器使用，建议在0.3-0.6(s)，一个ts片段是1s
-# 可通过解开capture()的注释部分测试
 TIMEOUT = 0.42
 URL_XDU_LOGIN = 'https://ids.xidian.edu.cn/authserver/login?service=http://xyt.learning.xidian.edu.cn/ydd/login'
 URL_COURSES = 'https://mooc1-2.chaoxing.com/visit/courses'
