@@ -1,5 +1,6 @@
 ![](https://img.shields.io/badge/Python-3.10.1-blue)
 ![](https://img.shields.io/badge/version-1.0.1-green)
+【目前停止维护！！别用！！】
 ## 某高校全自动课程签到模块
 >有时，你会遇到一些尴尬  
 >痛得快来不及请假，但导员仿佛在度假  
